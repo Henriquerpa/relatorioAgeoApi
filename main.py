@@ -296,7 +296,7 @@ def atualizar_dep_cliente(terminal, destino, produto, saldo):
 
         terminal = terminal.upper()
 
-        # Parâmetros da URL
+        # Parâmetros da URL-
         params = {
             'regiao': terminal,
             'destino': destino,
