@@ -1,4 +1,5 @@
 import time
+import socket
 import datetime
 from datetime import datetime, timedelta
 from selenium import webdriver
@@ -100,10 +101,15 @@ class Ageo:
             EC.visibility_of_element_located((By.XPATH, '//input[@placeholder="Senha"]'))
         ).send_keys(self.c_senha)
 
-        #Botão - Login Operador
+        time.sleep(5)
+
+        # Botão - Login Operador
+        print('Botão - Login Operador')
         wait.until(
             EC.element_to_be_clickable((By.XPATH, '//button[normalize-space()="Login"]'))
         ).click()
+
+
 
         # Validação - Login
         try:
@@ -365,6 +371,35 @@ def ler_arquivo_txt():
 
 USER, PASSWORD = ler_arquivo_txt()
 
+def enviar_log_para_api( status, erro,hh):
+    # Obter a data e a hora atuais
+    data_hora_atual = datetime.now()
+    # Formatar a data e a hora no formato desejado
+    data_hora_formatada = data_hora_atual.strftime("%Y-%m-%d %H:%M:%S")
+
+
+    url = "http://192.168.1.252:1338/util-api/log-automacao/"
+    data_do_evento = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Formato da data e hora
+    nome_da_maquina = socket.gethostname()
+
+    dados = {
+        "nome_da_maquina": nome_da_maquina,
+        "nome_da_automacao": 'relatório controle saldo AGEO',
+        "status": status,
+        "erro": erro,
+        "vel_download":'0',
+        "vel_upload":'0',
+        "cpu":'0',
+        "memoria":'0',
+        "consumo_energetico":'0',
+        "hora_homem_minuto": hh,
+        "data_do_evento": data_hora_formatada
+    }
+
+    response = requests.post(url, json=dados)
+    return response.status_code, response.text
+
+
 def main():
     linha1, linha2 = ler_arquivo_txt()
 
@@ -399,13 +434,17 @@ def main():
                 qtd_disp = row['Litros']
                 atualizar_agendamento(terminal=portal, destino=cliente, produto=produto, saldo=qtd_disp)
 
+        resposta = enviar_log_para_api(status='Sucesso', erro='', hh=4)
+        print(resposta)
+
 
 
 
         # ler_excel_agend()
         print(f'Fim: {datetime.now()}')
 
-
+    resposta = enviar_log_para_api(status='Sucesso', erro='', hh=4)
+    print(resposta)
 
 
 if __name__ == '__main__':
