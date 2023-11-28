@@ -1,7 +1,6 @@
 import time
 import datetime
 from datetime import datetime, timedelta
-import socket
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -219,7 +218,7 @@ class Ageo:
             return False
         except:
             print('Tem dados para Baixar')
-            WebDriverWait(self.driver, 120).until(
+            WebDriverWait(self.driver, 3).until(
                 EC.visibility_of_element_located((By.XPATH, '/html/body/app-root/div/div/app-pages/div/div/div/app-consulta/div[2]/div[3]/button'))
             )
 
@@ -281,22 +280,16 @@ def ler_excel_dep():
     caminho_excel = os.path.join(caminho_arquivos, 'Depositos por cliente.xlsx')
 
     df = pd.read_excel(caminho_excel)
-    print(df.columns)
 
     df = df.iloc[:-1]
 
     df['Liber Lt/CC'] = df['Liber Lt/CC'].apply(remove_nao_numericos).astype(float)
-    df['Sem Liber Lt/CC'] = df['Sem Liber Lt/CC'].apply(remove_nao_numericos).astype(float)
 
-    # df = df.groupby(['Cliente', 'Produto'])[[Liber Lt/CC', 'Sem Liber Lt/CC']].sum().reset_index()
-
-    grouped_df = df.groupby(['Cliente', 'Produto'])[['Liber Lt/CC', 'Sem Liber Lt/CC']].sum().reset_index()
-
-    print(grouped_df)
+    df = df.groupby(['Cliente', 'Produto'])['Liber Lt/CC'].sum().reset_index()
 
     return df
 
-def atualizar_dep_cliente(terminal, destino, produto, saldo,saldo_provi):
+def atualizar_dep_cliente(terminal, destino, produto, saldo):
     status_em_atualizacao()
     try:
         url = "http://192.168.1.252:1338/util-api/saldo-ageo/"
@@ -312,10 +305,9 @@ def atualizar_dep_cliente(terminal, destino, produto, saldo,saldo_provi):
 
         # Dados a serem enviados no corpo da solicitação
         data = {
-            'saldo': saldo,
-            'saldo_provisionado': saldo_provi
+            'saldo': saldo
         }
-        print(f'Atualizando base de saldo - Cliente: {destino} - Produto: {produto} - Saldo Disp. {saldo} Saldo Provi. {saldo_provi}')
+        print(f'Atualizando base de saldo - Cliente: {destino} - Produto: {produto} - Saldo Disp. {saldo}')
         response = requests.post(url, params=params, data=data)
 
         if response.status_code == 200:
@@ -328,7 +320,7 @@ def atualizar_dep_cliente(terminal, destino, produto, saldo,saldo_provi):
     finally:
         status_atualizado()
 
-def atualizar_agendamento(terminal, destino, produto,saldo ):
+def atualizar_agendamento(terminal, destino, produto, saldo):
     status_em_atualizacao()
     try:
         url = "http://192.168.1.252:1338/util-api/saldo-ageo/sub/"
@@ -373,34 +365,6 @@ def ler_arquivo_txt():
 
 USER, PASSWORD = ler_arquivo_txt()
 
-def enviar_log_para_api( status, erro):
-    # Obter a data e a hora atuais
-    data_hora_atual = datetime.now()
-    # Formatar a data e a hora no formato desejado
-    data_hora_formatada = data_hora_atual.strftime("%Y-%m-%d %H:%M:%S")
-
-
-    url = "http://192.168.1.252:1338/util-api/log-automacao/"
-
-    nome_da_maquina = socket.gethostname()
-
-    dados = {
-        "nome_da_maquina": nome_da_maquina,
-        "nome_da_automacao": 'relatório controle saldo AGEO',
-        "status": status,
-        "erro": erro,
-        "vel_download":'0',
-        "vel_upload":'0',
-        "cpu":'0',
-        "memoria":'0',
-        "consumo_energetico":'0',
-        "hora_homem_minuto": '4',
-        "data_do_evento": data_hora_formatada
-    }
-
-    response = requests.post(url, json=dados)
-    return response.status_code, response.text
-
 def main():
     linha1, linha2 = ler_arquivo_txt()
 
@@ -423,8 +387,7 @@ def main():
                 cliente = row['Cliente']
                 produto = row['Produto']
                 qtd_disp = row['Liber Lt/CC']
-                qtd_disp_provisionado = row['Sem Liber Lt/CC']
-                atualizar_dep_cliente(terminal=portal, destino=cliente, produto=produto, saldo=qtd_disp,saldo_provi=qtd_disp_provisionado)
+                atualizar_dep_cliente(terminal=portal, destino=cliente, produto=produto, saldo=qtd_disp)
 
         if rel_agendamento:
             ageo.renomear_arquivos(nome_relatorio="Consulta Agendamento")
@@ -436,8 +399,6 @@ def main():
                 qtd_disp = row['Litros']
                 atualizar_agendamento(terminal=portal, destino=cliente, produto=produto, saldo=qtd_disp)
 
-        resposta = enviar_log_para_api(status='Sucesso', erro='0')
-        print(resposta)
 
 
 
