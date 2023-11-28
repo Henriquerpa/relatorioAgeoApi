@@ -365,6 +365,31 @@ def ler_arquivo_txt():
 
 USER, PASSWORD = ler_arquivo_txt()
 
+def send_zap() -> object:
+
+    tokenzap = {'Authorization':'Bearer $2b$10$HkIQURNozuCyN7l2oYqLBOrBY8L73xVWpCm1UtKun3sds9VKEBi3m'}
+
+    try:
+        url = "http://192.168.1.252:3005/api/henrique/send-message"
+
+        data = {
+            'isGroup': True,
+            'message': '*teste python* *Automação:* Relatório AGEO Controle de Saldo. *Status:* Sucesso  ',
+            'phone': "120363184508436514@g.us"
+        }
+
+        response = requests.post(url, json=data, headers=tokenzap)
+
+        print(response)
+
+        if response.status_code == 201:
+
+            return True
+        else:
+            raise ValueError("Erro na solicitação POST. Código de status:", response.status_code)
+    except ValueError as e:
+        print(e)
+
 def main():
     linha1, linha2 = ler_arquivo_txt()
 
@@ -402,8 +427,11 @@ def main():
 
 
 
-        # ler_excel_agend()
-        print(f'Fim: {datetime.now()}')
+
+
+
+    print(f'Fim: {datetime.now()}')
+    send_zap()
 
 
 
