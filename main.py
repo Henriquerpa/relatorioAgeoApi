@@ -49,7 +49,7 @@ class Ageo:
         previsaoChegada = data_atual - timedelta(days=1)
 
         # Adicionar 4 dias à data_atual para obter data_ate
-        data_ate = data_atual + timedelta(days=4)
+        data_ate = data_atual + timedelta(days=6)
 
         # Agora você pode formatar as datas de acordo com a sua necessidade
         self.previsao_chegada = previsaoChegada.strftime("%d/%m/%Y")
@@ -58,7 +58,7 @@ class Ageo:
         # Configurações do navegador
         self.options = webdriver.ChromeOptions()
         #self.options.add_argument("--headless")
-        self.options.add_argument('--start-maximized')
+        self.options.add_argument("--window-size=1920,1080")
         # options.add_argument('--start-fullscreen')
         self.options.add_argument('--disable-dev-shm-usage')
         self.options.add_experimental_option("prefs", {"profile.default_content_setting_values.cookies": 1})
@@ -99,6 +99,8 @@ class Ageo:
         wait.until(
             EC.visibility_of_element_located((By.XPATH, '//input[@placeholder="Senha"]'))
         ).send_keys(self.c_senha)
+
+        time.sleep(10)
 
         #Botão - Login Operador
         wait.until(
